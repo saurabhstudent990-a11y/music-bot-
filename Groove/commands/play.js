@@ -9,7 +9,7 @@ module.exports = {
         .setName('play')
         .setDescription('Play a song or add it to the queue')
         .addStringOption(option =>
-            option.setName('search')
+            option.setName('query')
                 .setDescription('Song title or URL (YouTube, Spotify)')
                 .setRequired(true)
                 .setAutocomplete(true)
@@ -87,9 +87,21 @@ module.exports = {
         }
 
         await interaction.deferReply();
-        const query = interaction.options.getString('search') || interaction.options.get('search')?.value;
+        let query =
+            interaction.options.getString('query') ||
+            interaction.options.getString('search') ||
+            interaction.options.getString('song') ||
+            interaction.options.get('query')?.value ||
+            interaction.options.get('search')?.value ||
+            (interaction.options.data && interaction.options.data.length > 0 ? interaction.options.data[0]?.value : null);
 
-        if (!query || typeof query !== 'string' || !query.trim()) {
+        if (typeof query === 'string') {
+            query = query.trim();
+        } else if (query) {
+            query = String(query).trim();
+        }
+
+        if (!query) {
             const container = new ContainerBuilder()
                 .addTextDisplayComponents(
                     new TextDisplayBuilder().setContent(`${emojis.error} Please provide a song title or URL! (e.g. \`/play faded\` or \`/xtplay faded\`)`)

@@ -101,8 +101,7 @@ module.exports = {
         
         await interaction.deferReply({ ephemeral: true });
         
-        const playlistName = interaction.options.getString('name');
-        const query = interaction.options.getString('search');
+        const query = interaction.options.getString('query') || interaction.options.getString('search') || (interaction.options.data && interaction.options.data.find(d => d.name !== 'name')?.value);
         const userId = interaction.user.id;
 
         const playlist = await Playlist.findOne({ 

@@ -64,8 +64,7 @@ module.exports = {
         
         await interaction.deferReply({ ephemeral: true });
         
-        const userId = interaction.user.id;
-        const query = interaction.isChatInputCommand() ? interaction.options.getString('search') : null;
+        const query = interaction.isChatInputCommand() ? (interaction.options.getString('query') || interaction.options.getString('search') || (interaction.options.data && interaction.options.data[0]?.value)) : null;
         let track;
 
         if (query) {
