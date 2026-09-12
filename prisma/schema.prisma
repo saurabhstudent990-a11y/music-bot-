@@ -1,0 +1,100 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Guild {
+  id              String          @id // Discord Guild ID
+  name            String
+  icon            String?
+  joinedAt        DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  settings        GuildSettings?
+  playlists       Playlist[]
+  customCommands  CustomCommand[]
+  auditLogs       AuditLog[]
+
+  @@map("guilds")
+}
+
+model GuildSettings {
+  guildId               String    @id
+  guild                 Guild     @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  prefix                String    @default("xt")
+  djRoleId              String?
+  defaultVolume         Int       @default(80)
+  defaultLoopMode       String    @default("off") // off | track | queue
+  autoplayEnabled       Boolean   @default(false)
+  twentyFourSeven       Boolean   @default(false)
+  idleTimeoutSeconds    Int       @default(300)
+  announcementChannelId String?
+  language              String    @default("en")
+  preferredBotId        String?
+  updatedAt             DateTime  @updatedAt
+
+  @@map("guild_settings")
+}
+
+model Playlist {
+  id          String          @id @default(cuid())
+  guildId     String?
+  guild       Guild?          @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  userId      String          // Creator Discord ID
+  name        String
+  isPublic    Boolean         @default(false)
+  shareCode   String?         @unique
+  tracks      PlaylistTrack[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([userId, name])
+  @@map("playlists")
+}
+
+model PlaylistTrack {
+  id          String    @id @default(cuid())
+  playlistId  String
+  playlist    Playlist  @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  position    Int
+  title       String
+  artist      String?
+  durationMs  Int
+  uri         String
+  thumbnail   String?
+  source      String
+  addedAt     DateTime  @default(now())
+
+  @@index([playlistId, position])
+  @@map("playlist_tracks")
+}
+
+model CustomCommand {
+  id          String    @id @default(cuid())
+  guildId     String
+  guild       Guild     @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  name        String
+  actionType  String    // e.g. "play"
+  targetQuery String
+  createdById String
+  createdAt   DateTime  @default(now())
+
+  @@unique([guildId, name])
+  @@map("custom_commands")
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  guildId     String
+  guild       Guild     @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  userId      String
+  action      String    // e.g. "SETTINGS_UPDATE", "DJ_ROLE_CHANGE"
+  oldValue    String?
+  newValue    String?
+  createdAt   DateTime  @default(now())
+
+  @@map("audit_logs")
+}
